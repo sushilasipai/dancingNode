@@ -5,19 +5,41 @@ const cors = require("cors");
 
 const bodyParser = require("body-parser");
 
-express.use(bodyParser.json());
+express.use(bodyParser.json({ limit: "50MB" }));
 express.use(cors());
 
+express.post("/cluster", async (req, res) => {
+  const { documents, method } = req.body;
+  const clusterURL = "http://127.0.0.1:3001/cluster";
+  const origin = "http://localhost:3000"; // Update with your client origin
+
+  console.log(req.body);
+  try {
+    const data = await axios.post(
+      clusterURL,
+      { documents, method },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    return res.status(200).json({ data: data.data.result });
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
 express.post("/", async (req, res) => {
   const { query, algo, page } = req.body;
   let queryPayload;
-  const pageSize = 10;
+  const pageSize = 50;
   const start = (page - 1) * pageSize;
 
   if (algo === "pagerank") {
     queryPayload = {
       query: `(title:${query} OR content:${query})`,
-      sort: `${algo} desc, tstamp desc`,
+      sort: `${algo} desc`,
 
       params: {
         rows: pageSize,
@@ -27,10 +49,10 @@ express.post("/", async (req, res) => {
   } else {
     queryPayload = {
       query: `(title:${query} OR content:${query})`,
-      sort: `authority desc, hub desc,  tstamp desc`,
+      sort: `authority desc, hub desc`,
       params: {
-        rows: 10, // Number of rows per page
-        start: 0,
+        rows: pageSize,
+        start: start, // Start offset
       },
     };
   }
