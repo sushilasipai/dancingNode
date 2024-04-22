@@ -38,7 +38,7 @@ express.post("/", async (req, res) => {
 
   if (algo === "pagerank") {
     queryPayload = {
-      query: `(title:${query} OR content:${query})`,
+      query: `(title:"${query}" OR content:"${query}")`,
       sort: `score desc`,
 
       params: {
@@ -48,7 +48,7 @@ express.post("/", async (req, res) => {
     };
   } else {
     queryPayload = {
-      query: `(title:${query} OR content:${query})`,
+      query: `(title:"${query}" OR content:"${query}")`,
       sort: `authority desc, hub desc`,
       params: {
         rows: pageSize,
