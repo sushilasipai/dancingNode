@@ -30,15 +30,41 @@ express.post("/cluster", async (req, res) => {
     return res.status(500).json({ error: "Internal server error" });
   }
 });
+
+express.post("/query_expansion", async (req, res) => {
+  const { query, solr_results, clustertype } = req.body;
+  const clusterURL = "http://127.0.0.1:3001/query_expansion";
+  const origin = "http://localhost:3000"; // Update with your client origin
+
+  try {
+    const data = await axios.post(
+      clusterURL,
+      { query, solrResults: solr_results, clustertype },
+      {
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
+    console.log("data from expansion", data);
+    return res.status(200).json({ data: data.data.expanded_query });
+  } catch (error) {
+    console.error("Error:", error);
+    return res.status(500).json({ error: "Internal server error" });
+  }
+});
+
 express.post("/", async (req, res) => {
-  const { query, algo, page } = req.body;
+  const { query, algo, page, expanded_query } = req.body;
   let queryPayload;
   const pageSize = 50;
   const start = (page - 1) * pageSize;
 
   if (algo === "pagerank") {
     queryPayload = {
-      query: `(title:"${query}" OR content:"${query}")`,
+      query: expanded_query
+        ? `(title:${query} OR content:${query})`
+        : `(title:"${query}" OR content:"${query}")`,
       sort: `score desc`,
 
       params: {
@@ -48,7 +74,9 @@ express.post("/", async (req, res) => {
     };
   } else {
     queryPayload = {
-      query: `(title:"${query}" OR content:"${query}")`,
+      query: expanded_query
+        ? `(title:${query} OR content:${query})`
+        : `(title:"${query}" OR content:"${query}")`,
       sort: `authority desc, hub desc`,
       params: {
         rows: pageSize,
