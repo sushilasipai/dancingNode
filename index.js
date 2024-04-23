@@ -57,7 +57,7 @@ express.post("/query_expansion", async (req, res) => {
 express.post("/", async (req, res) => {
   const { query, algo, page, expanded_query } = req.body;
   let queryPayload;
-  const pageSize = 50;
+  const pageSize = 30;
   const start = (page - 1) * pageSize;
 
   if (algo === "pagerank") {
